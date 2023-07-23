@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { providers,Contract, ethers } from 'ethers';
 import { abi } from './abi';
 import { address } from './address';
+import "./App.css"
+import SwitchToBSCButton from './components/SwitchToBSC';
 
 function App() {
   const [contract, setContract] = useState();
+  const [contractParams,setContractParams] = useState({'amountIn':0,'reserveIn':0,'reserveOut':0});
+  const [displayBscBtn, setDisplayBscBtn] = useState(false);
 
   useEffect(() => {
     const connectMetaMask = async () => {
@@ -28,12 +32,12 @@ function App() {
       const provider = new providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const _contract = new Contract(address, abi, signer);
-      const ownerAddress = '0x0B60Fdd11E852cd1191c298e8f7D3Fe4af919168';
       console.log(_contract)
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        const tokens = await _contract.balanceOf(ethers.utils.getAddress('0x0B60Fdd11E852cd1191c298e8f7D3Fe4af919168'));
-       console.log(tokens);
+        console.log(accounts)
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if(chainId!='0x38')setDisplayBscBtn(true);
       } catch (error) {
         console.log(error)
       }
@@ -42,10 +46,38 @@ function App() {
     initNFTContract();
   }, []);
 
+  const changeHandler=(e)=>{
+const prevContractState = contractParams;
+prevContractState[e.target.id]=parseInt(e.target.value);
+setContractParams(prevContractState);
+  }
+
+  const handleQuery=async()=>{
+    try {
+      const res = await contract.getAmountOut(contractParams.amountIn,contractParams.reserveIn,contractParams.reserveOut);
+      const result =parseInt(res,16)
+      alert(`The result of query is ${result}`)
+    } catch (error) {
+      console.log('error',error)
+    }
+  }
+
   return (
-    <div>
+    <div className='app'>
       <h1>Pancakeswap Router V2 BSC Chain</h1>
-      {contract ? <p>Contract connected: {contract.address}</p> : <p>Connecting to contract...</p>}
+      {contract ? <div className='contractInit'>
+        <p>Contract connected: {contract.address}</p>
+        <label htmlFor="amountIn">Amount In</label>
+        <input type="number" name="amountIn" min={0} id="amountIn" onChange={changeHandler} />
+        <label htmlFor="reserveIn">Reserve In</label>
+        <input type="number" name="reserveIn" min={0} id="reserveIn"  onChange={changeHandler} />
+        <label htmlFor="reserveOut">Reserve Out</label>
+        <input type="number" name="reserveOut" min={0}  id="reserveOut" onChange={changeHandler} />
+        <button onClick={handleQuery}>Query</button>
+        {displayBscBtn?  
+        <SwitchToBSCButton/>:<></>
+      }
+        </div> : <p>Connecting to contract...</p>}
     </div>
   );
 }
