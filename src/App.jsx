@@ -44,7 +44,7 @@ function App() {
 
   return (
     <div>
-      <h1>NFT Gateway</h1>
+      <h1>Pancakeswap Router V2 BSC Chain</h1>
       {contract ? <p>Contract connected: {contract.address}</p> : <p>Connecting to contract...</p>}
     </div>
   );
